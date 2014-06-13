@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -20,6 +21,7 @@ import (
 const (
 	geoURI    = "http://api.geonames.org/search?username=%s&q=%s&maxRows=1&type=json&orderby=relevance"
 	yrURI     = "http://www.yr.no/place/%s/%s/%s/forecast.xml"
+	yrNorURI  = "http://www.yr.no/place/%s/%s/%s/%s/forecast.xml"
 	geoErrMsg = "Unable to find %s"
 )
 
@@ -73,7 +75,7 @@ type Pod struct {
 
 // Config is the configuration for this thing.
 type Config struct {
-	WolframId string
+	WolframId  string
 	GeonamesId string
 }
 
@@ -276,19 +278,36 @@ func getLocation(query string, conf *Config) (country, state, city string, err e
 	return
 }
 
+var hardcoded_places = map[string][]string{
+	"oslo":     {"Norway", "Oslo", "Oslo", "Oslo"},
+	"sandvika": {"Norway", "Akershus", "Bærum", "Sandvika"},
+}
+
 func Weather(query string, conf *Config) (output string, err error) {
 	var data *yr.WeatherData
+	var URL, city, country, state string
 
-	ctry, state, city, err := getLocation(query, conf)
+	if subURI, ok := hardcoded_places[strings.ToLower(query)]; ok {
+		country = subURI[0]
+		state = subURI[1]
+		county := subURI[2]
+		city = subURI[3]
 
-	if err != nil {
-		if e, ok := err.(geoErr); ok {
-			return fmt.Sprintf("\x02Weather (\x02YR.no\x02):\x02 %v", e), nil
+		URL = fmt.Sprintf(yrNorURI, country, state, county, city)
+	} else {
+		country, state, city, err = getLocation(query, conf)
+
+		if err != nil {
+			if e, ok := err.(geoErr); ok {
+				return fmt.Sprintf("\x02Weather (\x02YR.no\x02):\x02 %v", e), nil
+			}
+			return "", err
 		}
-		return
+
+		URL = fmt.Sprintf(yrURI, country, state, city)
 	}
 
-	data, err = yr.LoadFromURL(fmt.Sprintf(yrURI, ctry, state, city))
+	data, err = yr.LoadFromURL(URL)
 
 	if err != nil {
 		return
@@ -297,7 +316,7 @@ func Weather(query string, conf *Config) (output string, err error) {
 	output = fmt.Sprintf(
 		"\x02Weather (\x02YR.no\x02):\x02 %s, %s \x02=>\x02 %s, %d \u00B0C",
 		city,
-		ctry,
+		country,
 		data.Current().Symbol.Name,
 		data.Current().Temperature.Value,
 	)
