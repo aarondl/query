@@ -2,22 +2,30 @@
 package query
 
 import (
+	"bytes"
 	"encoding/json"
 	"encoding/xml"
-	"net/url"
-	"bytes"
 	"fmt"
 	"html"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"regexp"
-	"github.com/BurntSushi/toml"
 	"time"
+
+	"github.com/BurntSushi/toml"
+	"github.com/IslandStone/yr"
+)
+
+const (
+	geoURI    = "http://api.geonames.org/search?q=%s&maxRows=1&username=oystedal&type=json&orderby=relevance"
+	yrURI     = "http://www.yr.no/place/%s/%s/%s/forecast.xml"
+	geoErrMsg = "Unable to find %s"
 )
 
 // GoogleData is used to parse the response from Google.
 type GoogleData struct {
-	ResponseData *ResponseData
+	ResponseData   *ResponseData
 	ResponseStatus float64
 }
 
@@ -56,11 +64,11 @@ type WolframData struct {
 
 // Pod is a substruct of WolframData.
 type Pod struct {
-	Title      string    `xml:"title,attr"`
-	Id         string    `xml:"id,attr"`
-	Primary    bool      `xml:"primary,attr"`
-	Numsubpods int       `xml:"numsubpods,attr"`
-	PlainTexts []string  `xml:"subpod>plaintext"`
+	Title      string   `xml:"title,attr"`
+	Id         string   `xml:"id,attr"`
+	Primary    bool     `xml:"primary,attr"`
+	Numsubpods int      `xml:"numsubpods,attr"`
+	PlainTexts []string `xml:"subpod>plaintext"`
 }
 
 // Config is the configuration for this thing.
@@ -88,7 +96,7 @@ var (
 )
 
 const (
-	googleUri = "http://ajax.googleapis.com/ajax/services/search/web?v=1.0&q=%s"
+	googleUri  = "http://ajax.googleapis.com/ajax/services/search/web?v=1.0&q=%s"
 	wolframUri = "http://api.wolframalpha.com/v2/query?format=plaintext&input=%s&appid=%s"
 )
 
@@ -215,6 +223,83 @@ func YouTube(msg string) (output string, err error) {
 		buf.WriteString(html.UnescapeString(string(title[1])))
 		output = buf.String()
 	}
+
+	return
+}
+
+type geonameplace struct {
+	CountryName string
+	AdminName1  string
+	Name        string
+}
+
+type geonamesdata struct {
+	Geonames []geonameplace
+}
+
+type geoErr struct {
+	query string
+}
+
+func (g geoErr) Error() string {
+	return fmt.Sprintf(geoErrMsg, g.query)
+}
+
+func getLocation(query string) (country, state, city string, err error) {
+	resp, err := http.Get(fmt.Sprintf(geoURI, url.QueryEscape(query)))
+
+	if err != nil {
+		return
+	}
+
+	defer resp.Body.Close()
+
+	r := json.NewDecoder(resp.Body)
+
+	var data geonamesdata
+	err = r.Decode(&data)
+
+	if err != nil {
+		return
+	}
+
+	if len(data.Geonames) == 0 {
+		err = geoErr{query}
+		return
+	}
+
+	country = data.Geonames[0].CountryName
+	state = data.Geonames[0].AdminName1
+	city = data.Geonames[0].Name
+
+	return
+}
+
+func Weather(query string) (output string, err error) {
+	var data *yr.WeatherData
+
+	ctry, state, city, err := getLocation(query)
+
+	if err != nil {
+		if e, ok := err.(geoErr); ok {
+			return fmt.Sprintf("\x02Weather (\x02YR.no\x02):\x02 %v", e), nil
+		}
+		return
+	}
+
+	data, err = yr.LoadFromURL(fmt.Sprintf(yrURI, ctry, state, city))
+
+	if err != nil {
+		return
+	}
+
+	output = fmt.Sprintf(
+		"\x02Weather (\x02YR.no\x02):\x02 %s, %s \x02=>\x02 %s, %d \u00B0C",
+		city,
+		ctry,
+		data.Current().Symbol.Name,
+		data.Current().Temperature.Value,
+	)
 
 	return
 }
