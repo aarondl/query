@@ -14,11 +14,11 @@ import (
 	"time"
 
 	"github.com/BurntSushi/toml"
-	"github.com/IslandStone/yr"
+	"github.com/Islandstone/yr"
 )
 
 const (
-	geoURI    = "http://api.geonames.org/search?q=%s&maxRows=1&username=oystedal&type=json&orderby=relevance"
+	geoURI    = "http://api.geonames.org/search?username=%s&q=%s&maxRows=1&type=json&orderby=relevance"
 	yrURI     = "http://www.yr.no/place/%s/%s/%s/forecast.xml"
 	geoErrMsg = "Unable to find %s"
 )
@@ -74,6 +74,7 @@ type Pod struct {
 // Config is the configuration for this thing.
 type Config struct {
 	WolframId string
+	GeonamesId string
 }
 
 // NewConfig loads the config file.
@@ -245,8 +246,8 @@ func (g geoErr) Error() string {
 	return fmt.Sprintf(geoErrMsg, g.query)
 }
 
-func getLocation(query string) (country, state, city string, err error) {
-	resp, err := http.Get(fmt.Sprintf(geoURI, url.QueryEscape(query)))
+func getLocation(query string, conf *Config) (country, state, city string, err error) {
+	resp, err := http.Get(fmt.Sprintf(geoURI, conf.GeonamesId, url.QueryEscape(query)))
 
 	if err != nil {
 		return
@@ -275,10 +276,10 @@ func getLocation(query string) (country, state, city string, err error) {
 	return
 }
 
-func Weather(query string) (output string, err error) {
+func Weather(query string, conf *Config) (output string, err error) {
 	var data *yr.WeatherData
 
-	ctry, state, city, err := getLocation(query)
+	ctry, state, city, err := getLocation(query, conf)
 
 	if err != nil {
 		if e, ok := err.(geoErr); ok {
