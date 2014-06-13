@@ -25,6 +25,11 @@ const (
 	geoErrMsg = "Unable to find %s"
 )
 
+var placesLookup = map[string][]string{
+	"oslo":     {"Norway", "Oslo", "Oslo", "Oslo"},
+	"sandvika": {"Norway", "Akershus", "Bærum", "Sandvika"},
+}
+
 // GoogleData is used to parse the response from Google.
 type GoogleData struct {
 	ResponseData   *ResponseData
@@ -278,16 +283,11 @@ func getLocation(query string, conf *Config) (country, state, city string, err e
 	return
 }
 
-var hardcoded_places = map[string][]string{
-	"oslo":     {"Norway", "Oslo", "Oslo", "Oslo"},
-	"sandvika": {"Norway", "Akershus", "Bærum", "Sandvika"},
-}
-
 func Weather(query string, conf *Config) (output string, err error) {
 	var data *yr.WeatherData
 	var URL, city, country, state string
 
-	if subURI, ok := hardcoded_places[strings.ToLower(query)]; ok {
+	if subURI, ok := placesLookup[strings.ToLower(query)]; ok {
 		country = subURI[0]
 		state = subURI[1]
 		county := subURI[2]
