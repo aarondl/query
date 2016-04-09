@@ -81,9 +81,9 @@ type Pod struct {
 
 // Config is the configuration for this thing.
 type Config struct {
-	WolframId    string
-	GeonamesId   string
-	GoogleApiKey string
+	WolframId    string `toml:"wolfram_id"`
+	GeonamesId   string `toml:"geonames_id"`
+	GoogleApiKey string `toml:"google_api_key"`
 }
 
 // NewConfig loads the config file.
