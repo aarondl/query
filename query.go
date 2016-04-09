@@ -106,15 +106,15 @@ var (
 )
 
 const (
-	googleUri  = "http://ajax.googleapis.com/ajax/services/search/web?v=1.0&q=%s"
-	shortenUri = "https://www.googleapis.com/urlshortener/v1/url?fields=id,longUrl&key=%s"
-	wolframUri = "http://api.wolframalpha.com/v2/query?format=plaintext&input=%s&appid=%s"
+	googleURI  = "http://ajax.googleapis.com/ajax/services/search/web?v=1.0&q=%s"
+	shortenURI = "https://www.googleapis.com/urlshortener/v1/url?fields=id,longUrl&key=%s"
+	wolframURI = "http://api.wolframalpha.com/v2/query?format=plaintext&input=%s&appid=%s"
 )
 
 // Google performs a query and returns a formatted result.
 func Google(query string, conf *Config) (output string, err error) {
 	var resp *http.Response
-	resp, err = http.Get(fmt.Sprintf(googleUri, url.QueryEscape(query)))
+	resp, err = http.Get(fmt.Sprintf(googleURI, url.QueryEscape(query)))
 	if err != nil {
 		return
 	}
@@ -124,63 +124,58 @@ func Google(query string, conf *Config) (output string, err error) {
 	decoder := json.NewDecoder(resp.Body)
 	err = decoder.Decode(&jsonObj)
 	if err != nil {
-		return
+		return "", err
 	}
 
-	if jsonObj.ResponseData != nil && int(jsonObj.ResponseStatus) == 200 {
-		if len(jsonObj.ResponseData.Results) == 0 {
-			output = fmt.Sprintf("\x02Google: No results found.")
-			return
-		}
+	if jsonObj.ResponseData == nil || int(jsonObj.ResponseStatus) != 200 || len(jsonObj.ResponseData.Results) == 0 {
+		return fmt.Sprintf("\x02Google: No results found."), err
+	}
 
-		result := jsonObj.ResponseData.Results[0]
+	result := jsonObj.ResponseData.Results[0]
+	url := rgxTags.ReplaceAllString(result.UnescapedUrl, "")
+	var short string
 
-		if len(conf.GoogleApiKey) > 0 {
-			if short, err := GetShortUrl(jsonObj.ResponseData.Cursor.MoreResultsUrl, conf); err != nil {
-				output = fmt.Sprintf(
-					"\x02Google (\x02%s results\x02):\x02 %s - %s",
-					jsonObj.ResponseData.Cursor.ResultCount,
-					rgxTags.ReplaceAllString(result.UnescapedUrl, ""),
-					html.UnescapeString(rgxTags.ReplaceAllString(result.Content, "")),
-				)
-			} else {
-				output = fmt.Sprintf(
-					"\x02Google (\x02%s results\x02) [%s]:\x02 %s - %s",
-					jsonObj.ResponseData.Cursor.ResultCount,
-					short,
-					rgxTags.ReplaceAllString(result.UnescapedUrl, ""),
-					html.UnescapeString(rgxTags.ReplaceAllString(result.Content, "")),
-				)
-			}
-		} else {
-			output = fmt.Sprintf(
-				"\x02Google (\x02%s results\x02):\x02 %s - %s",
-				jsonObj.ResponseData.Cursor.ResultCount,
-				rgxTags.ReplaceAllString(result.UnescapedUrl, ""),
-				html.UnescapeString(rgxTags.ReplaceAllString(result.Content, "")),
-			)
+	if len(conf.GoogleApiKey) > 0 {
+		short, _ = GetShortUrl(jsonObj.ResponseData.Cursor.MoreResultsUrl, conf)
+		if len(short) > 0 {
+			short = fmt.Sprintf(" [%s]", short)
 		}
 	}
 
-	return
+	output = fmt.Sprintf(
+		"\x02Google (\x02%s results\x02)%s:\x02 %s - %s",
+		short,
+		jsonObj.ResponseData.Cursor.ResultCount,
+		url,
+		html.UnescapeString(rgxTags.ReplaceAllString(result.Content, "")),
+	)
+
+	return output, nil
 }
 
-type UrlShortenResponse struct {
-	Id      string
-	LongUrl string
+type URLShortenResponse struct {
+	ID      string `json:"id"`
+	LongURL string `json:"longUrl"`
 }
 
-type UrlShortenQuery struct {
-	longUrl string
+type URLShortenQuery struct {
+	LongURL string `json:"longUrl"`
 }
 
 // GetShortUrl takes a long url and returns a shorter url from the Google API
-func GetShortUrl(longUrl string, conf *Config) (short string, err error) {
+func GetShortUrl(longURL string, conf *Config) (short string, err error) {
 	var resp *http.Response
+	var body []byte
+
+	urlQuery := URLShortenQuery{LongURL: longURL}
+	if body, err = json.Marshal(urlQuery); err != nil {
+		return "", fmt.Errorf("failed to marshal url query: %v", err)
+	}
+
 	resp, err = http.Post(
-		fmt.Sprintf(shortenUri, conf.GoogleApiKey),
+		fmt.Sprintf(shortenURI, conf.GoogleApiKey),
 		"application/json",
-		strings.NewReader("{longUrl: \""+longUrl+"\"}"),
+		bytes.NewReader(body),
 	)
 
 	if err != nil {
@@ -188,22 +183,20 @@ func GetShortUrl(longUrl string, conf *Config) (short string, err error) {
 	}
 	defer resp.Body.Close()
 
-	var jsonObj UrlShortenResponse
+	var jsonObj URLShortenResponse
 	decoder := json.NewDecoder(resp.Body)
 	err = decoder.Decode(&jsonObj)
 	if err != nil {
-		return
+		return "", err
 	}
 
-	short = jsonObj.Id
-
-	return
+	return jsonObj.ID, nil
 }
 
 // Wolfram performs a query and returns a formatted result.
 func Wolfram(query string, conf *Config) (output string, err error) {
 	var resp *http.Response
-	requestUri := fmt.Sprintf(wolframUri, url.QueryEscape(query), conf.WolframId)
+	requestUri := fmt.Sprintf(wolframURI, url.QueryEscape(query), conf.WolframId)
 	resp, err = http.Get(requestUri)
 	if err != nil {
 		return
