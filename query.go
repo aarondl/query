@@ -144,8 +144,8 @@ func Google(query string, conf *Config) (output string, err error) {
 
 	output = fmt.Sprintf(
 		"\x02Google (\x02%s results\x02)%s:\x02 %s - %s",
-		short,
 		jsonObj.ResponseData.Cursor.ResultCount,
+		short,
 		url,
 		html.UnescapeString(rgxTags.ReplaceAllString(result.Content, "")),
 	)
