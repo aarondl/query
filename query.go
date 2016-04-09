@@ -56,7 +56,8 @@ type Result struct {
 
 // Cursor is a substruct of GoogleData.
 type Cursor struct {
-	ResultCount string
+	ResultCount    string
+	MoreResultsUrl string
 }
 
 // WolframData is used to parse the response from WolframAlpha.
@@ -80,8 +81,9 @@ type Pod struct {
 
 // Config is the configuration for this thing.
 type Config struct {
-	WolframId  string
-	GeonamesId string
+	WolframId    string
+	GeonamesId   string
+	GoogleApiKey string
 }
 
 // NewConfig loads the config file.
@@ -105,11 +107,12 @@ var (
 
 const (
 	googleUri  = "http://ajax.googleapis.com/ajax/services/search/web?v=1.0&q=%s"
+	shortenUri = "https://www.googleapis.com/urlshortener/v1/url?fields=id,longUrl&key=%s"
 	wolframUri = "http://api.wolframalpha.com/v2/query?format=plaintext&input=%s&appid=%s"
 )
 
 // Google performs a query and returns a formatted result.
-func Google(query string) (output string, err error) {
+func Google(query string, conf *Config) (output string, err error) {
 	var resp *http.Response
 	resp, err = http.Get(fmt.Sprintf(googleUri, url.QueryEscape(query)))
 	if err != nil {
@@ -131,13 +134,68 @@ func Google(query string) (output string, err error) {
 		}
 
 		result := jsonObj.ResponseData.Results[0]
-		output = fmt.Sprintf(
-			"\x02Google (\x02%s results\x02):\x02 %s - %s",
-			jsonObj.ResponseData.Cursor.ResultCount,
-			rgxTags.ReplaceAllString(result.UnescapedUrl, ""),
-			html.UnescapeString(rgxTags.ReplaceAllString(result.Content, "")),
-		)
+
+		if len(conf.GoogleApiKey) > 0 {
+			if short, err := GetShortUrl(jsonObj.ResponseData.Cursor.MoreResultsUrl, conf); err != nil {
+				output = fmt.Sprintf(
+					"\x02Google (\x02%s results\x02):\x02 %s - %s",
+					jsonObj.ResponseData.Cursor.ResultCount,
+					rgxTags.ReplaceAllString(result.UnescapedUrl, ""),
+					html.UnescapeString(rgxTags.ReplaceAllString(result.Content, "")),
+				)
+			} else {
+				output = fmt.Sprintf(
+					"\x02Google (\x02%s results\x02) [%s]:\x02 %s - %s",
+					jsonObj.ResponseData.Cursor.ResultCount,
+					short,
+					rgxTags.ReplaceAllString(result.UnescapedUrl, ""),
+					html.UnescapeString(rgxTags.ReplaceAllString(result.Content, "")),
+				)
+			}
+		} else {
+			output = fmt.Sprintf(
+				"\x02Google (\x02%s results\x02):\x02 %s - %s",
+				jsonObj.ResponseData.Cursor.ResultCount,
+				rgxTags.ReplaceAllString(result.UnescapedUrl, ""),
+				html.UnescapeString(rgxTags.ReplaceAllString(result.Content, "")),
+			)
+		}
 	}
+
+	return
+}
+
+type UrlShortenResponse struct {
+	Id      string
+	LongUrl string
+}
+
+type UrlShortenQuery struct {
+	longUrl string
+}
+
+// GetShortUrl takes a long url and returns a shorter url from the Google API
+func GetShortUrl(longUrl string, conf *Config) (short string, err error) {
+	var resp *http.Response
+	resp, err = http.Post(
+		fmt.Sprintf(shortenUri, conf.GoogleApiKey),
+		"application/json",
+		strings.NewReader("{longUrl: \""+longUrl+"\"}"),
+	)
+
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+
+	var jsonObj UrlShortenResponse
+	decoder := json.NewDecoder(resp.Body)
+	err = decoder.Decode(&jsonObj)
+	if err != nil {
+		return
+	}
+
+	short = jsonObj.Id
 
 	return
 }
