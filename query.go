@@ -138,12 +138,12 @@ func Google(query string, conf *Config) (output string, err error) {
 	if len(conf.GoogleApiKey) > 0 {
 		short, _ = GetShortUrl(jsonObj.ResponseData.Cursor.MoreResultsUrl, conf)
 		if len(short) > 0 {
-			short = fmt.Sprintf(" [%s]", short)
+			short = fmt.Sprintf(" %s", short)
 		}
 	}
 
 	output = fmt.Sprintf(
-		"\x02Google (\x02%s results\x02)%s:\x02 %s - %s",
+		"\x02Google (\x02%s results%s\x02):\x02 %s - %s",
 		jsonObj.ResponseData.Cursor.ResultCount,
 		short,
 		url,
