@@ -43,7 +43,7 @@ type GoogleSearchItem struct {
 
 // GoogleSearchInformation
 type GoogleSearchInformation struct {
-	TotalResults          int64   `json:"integer"`
+	TotalResults          int64   `json:"totalResults"`
 	SearchTime            float64 `json:"searchTime"`
 	FormattedTotalResults string  `json:"formattedTotalResults"`
 	FormattedSearchTime   string  `json:"formattedSearchTime"`
@@ -60,7 +60,7 @@ type GoogleQuery struct {
 	CX             string `json:"cx"`
 	Title          string `json:"title"`
 	TotalResults   string `json:"totalResults"`
-	SearchTerms    string `json:searchTerms`
+	SearchTerms    string `json:"searchTerms"`
 	Count          int    `json:"count"`
 	StartIndex     int    `json:"startIndex"`
 	InputEncoding  string `json:"inputEncoding"`
