@@ -1,4 +1,4 @@
-// Provides functions to query web interfaces.
+// Package query provides functions to query web interfaces.
 package query
 
 import "github.com/BurntSushi/toml"

@@ -12,6 +12,7 @@ const (
 	weatherNorURI = "http://www.yr.no/place/%s/%s/%s/%s/forecast.xml"
 )
 
+// Weather provides weather information from yr.no
 func Weather(query string, conf *Config) (output string, err error) {
 	var data *yr.WeatherData
 	var URL, city, country, state string

@@ -11,7 +11,7 @@ import (
 
 var (
 	rgxTitle = regexp.MustCompile(`<meta name="title" content="(.*?)"`)
-	rgxUrl   = regexp.MustCompile(
+	rgxURL   = regexp.MustCompile(
 		`(http|https):\/\/(www\.)?(youtube.com|youtu.be)\/\S+`)
 	rgxDur = regexp.MustCompile(
 		`<meta itemprop="duration" content="PT([0-9]+M[0-9]+S)"`)
@@ -20,7 +20,7 @@ var (
 // YouTube will check to see if a message contains a YouTube uri, if so it will
 // format a string with the title in it.
 func YouTube(msg string) (output string, err error) {
-	link := rgxUrl.FindString(msg)
+	link := rgxURL.FindString(msg)
 	if len(link) == 0 {
 		return
 	}

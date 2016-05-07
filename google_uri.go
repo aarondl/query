@@ -11,17 +11,19 @@ const (
 	shortenURI = "https://www.googleapis.com/urlshortener/v1/url?fields=id,longUrl&key=%s"
 )
 
+// URLShortenResponse is the json response back from the server
 type URLShortenResponse struct {
 	ID      string `json:"id"`
 	LongURL string `json:"longUrl"`
 }
 
+// URLShortenQuery is the json request to the server
 type URLShortenQuery struct {
 	LongURL string `json:"longUrl"`
 }
 
-// GetShortUrl takes a long url and returns a shorter url from the Google API
-func GetShortUrl(longURL string, conf *Config) (short string, err error) {
+// GetShortURL takes a long url and returns a shorter url from the Google API
+func GetShortURL(longURL string, conf *Config) (short string, err error) {
 	var resp *http.Response
 	var body []byte
 

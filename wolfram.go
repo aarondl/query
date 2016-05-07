@@ -24,7 +24,7 @@ type WolframData struct {
 // Pod is a substruct of WolframData.
 type Pod struct {
 	Title      string   `xml:"title,attr"`
-	Id         string   `xml:"id,attr"`
+	ID         string   `xml:"id,attr"`
 	Primary    bool     `xml:"primary,attr"`
 	Numsubpods int      `xml:"numsubpods,attr"`
 	PlainTexts []string `xml:"subpod>plaintext"`
@@ -33,8 +33,8 @@ type Pod struct {
 // Wolfram performs a query and returns a formatted result.
 func Wolfram(query string, conf *Config) (output string, err error) {
 	var resp *http.Response
-	requestUri := fmt.Sprintf(wolframURI, url.QueryEscape(query), conf.WolframID)
-	resp, err = http.Get(requestUri)
+	requestURI := fmt.Sprintf(wolframURI, url.QueryEscape(query), conf.WolframID)
+	resp, err = http.Get(requestURI)
 	if err != nil {
 		return
 	}

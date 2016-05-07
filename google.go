@@ -17,7 +17,7 @@ var (
 	rgxTags = regexp.MustCompile(`<[^>]*>`)
 )
 
-// GoogleData is used to parse the response from Google.
+// GoogleSearch is used to parse the response from Google.
 type GoogleSearch struct {
 	Items   []GoogleSearchItem      `json:"items"`
 	Info    GoogleSearchInformation `json:"searchInformation"`
@@ -41,7 +41,7 @@ type GoogleSearchItem struct {
 	// pagemap ignored
 }
 
-// GoogleSearchInformation
+// GoogleSearchInformation is meta about the search
 type GoogleSearchInformation struct {
 	TotalResults          string  `json:"totalResults"`
 	SearchTime            float64 `json:"searchTime"`
