@@ -43,7 +43,7 @@ type GoogleSearchItem struct {
 
 // GoogleSearchInformation
 type GoogleSearchInformation struct {
-	TotalResults          int64   `json:"totalResults"`
+	TotalResults          string  `json:"totalResults"`
 	SearchTime            float64 `json:"searchTime"`
 	FormattedTotalResults string  `json:"formattedTotalResults"`
 	FormattedSearchTime   string  `json:"formattedSearchTime"`
@@ -107,7 +107,7 @@ func Google(query string, conf *Config) (output string, err error) {
 
 	output = fmt.Sprintf(
 		"\x02Google (\x02%d results\x02):\x02 %s - %s",
-		results.Info.TotalResults,
+		results.Info.FormattedTotalResults,
 		results.Items[0].Link,
 		results.Items[0].Snippet,
 	)
