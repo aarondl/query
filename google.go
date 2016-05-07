@@ -106,7 +106,7 @@ func Google(query string, conf *Config) (output string, err error) {
 	}
 
 	output = fmt.Sprintf(
-		"\x02Google (\x02%d results\x02):\x02 %s - %s",
+		"\x02Google (\x02%s results\x02):\x02 %s - %s",
 		results.Info.FormattedTotalResults,
 		results.Items[0].Link,
 		results.Items[0].Snippet,
