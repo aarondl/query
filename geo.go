@@ -2,6 +2,7 @@ package query
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -36,6 +37,10 @@ func (g geoErr) Error() string {
 }
 
 func getLocation(query string, conf *Config) (country, state, city string, err error) {
+	if len(conf.GeonamesID) == 0 {
+		return country, state, city, errors.New("geo cannot be used without geonames_id in config")
+	}
+
 	resp, err := http.Get(fmt.Sprintf(geoURI, conf.GeonamesID, url.QueryEscape(query)))
 
 	if err != nil {

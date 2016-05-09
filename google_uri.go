@@ -3,6 +3,7 @@ package query
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 )
@@ -24,6 +25,10 @@ type URLShortenQuery struct {
 
 // GetShortURL takes a long url and returns a shorter url from the Google API
 func GetShortURL(longURL string, conf *Config) (short string, err error) {
+	if len(conf.GoogleURLAPIKey) == 0 {
+		return short, errors.New("cannot use shorturl without google_url_api_key")
+	}
+
 	var resp *http.Response
 	var body []byte
 
@@ -33,7 +38,7 @@ func GetShortURL(longURL string, conf *Config) (short string, err error) {
 	}
 
 	resp, err = http.Post(
-		fmt.Sprintf(shortenURI, conf.GoogleURIAPIKey),
+		fmt.Sprintf(shortenURI, conf.GoogleURLAPIKey),
 		"application/json",
 		bytes.NewReader(body),
 	)

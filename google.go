@@ -2,6 +2,7 @@ package query
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -70,6 +71,10 @@ type GoogleQuery struct {
 
 // Google performs a query and returns a formatted result.
 func Google(query string, conf *Config) (output string, err error) {
+	if len(conf.GoogleSearchCXID) == 0 || len(conf.GoogleSearchAPIKey) == 0 {
+		return output, errors.New("cannot use google search without google_search_api_key and google_search_cx_id")
+	}
+
 	params := make(url.Values)
 	params.Set("cx", conf.GoogleSearchCXID)
 	params.Set("key", conf.GoogleSearchAPIKey)

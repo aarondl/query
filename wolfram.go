@@ -2,7 +2,9 @@ package query
 
 import (
 	"encoding/xml"
+	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 )
@@ -32,19 +34,36 @@ type Pod struct {
 
 // Wolfram performs a query and returns a formatted result.
 func Wolfram(query string, conf *Config) (output string, err error) {
-	var resp *http.Response
-	requestURI := fmt.Sprintf(wolframURI, url.QueryEscape(query), conf.WolframID)
-	resp, err = http.Get(requestURI)
-	if err != nil {
-		return
+	if len(conf.WolframID) == 0 {
+		return output, errors.New("cannot use wolfram without wolfram_id")
 	}
 
-	defer resp.Body.Close()
-	var xmlObj WolframData
-	decoder := xml.NewDecoder(resp.Body)
-	err = decoder.Decode(&xmlObj)
+	requestURI := fmt.Sprintf(wolframURI, url.QueryEscape(query), conf.WolframID)
+
+	var resp *http.Response
+	if resp, err = http.Get(requestURI); err != nil {
+		return output, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		output = fmt.Sprintf("\x02Wolfram:\x02 Server response was %d", resp.StatusCode)
+		return output, nil
+	}
+
+	var body []byte
+	body, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return
+		return output, err
+	}
+	_ = resp.Body.Close()
+
+	fmt.Printf("Body len: %d\n", len(body))
+	fmt.Printf("%s\n", body)
+
+	var xmlObj WolframData
+	err = xml.Unmarshal(body, &xmlObj)
+	if err != nil {
+		return output, err
 	}
 
 	// Handle cases of no results.
@@ -58,7 +77,7 @@ func Wolfram(query string, conf *Config) (output string, err error) {
 			output = fmt.Sprintf("\x02Wolfram (\x02%.2fms\x02):\x02 No results found.",
 				xmlObj.ParseTiming)
 		}
-		return
+		return output, nil
 	}
 
 	// If there was no primary response fallback to link.
@@ -69,7 +88,7 @@ func Wolfram(query string, conf *Config) (output string, err error) {
 			xmlObj.Pods[0].PlainTexts[0],
 			url.QueryEscape(query),
 		)
-		return
+		return output, nil
 	}
 
 	output = fmt.Sprintf(

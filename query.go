@@ -7,7 +7,7 @@ import "github.com/BurntSushi/toml"
 type Config struct {
 	WolframID          string `toml:"wolfram_id"`
 	GeonamesID         string `toml:"geonames_id"`
-	GoogleURIAPIKey    string `toml:"google_uri_api_key"`
+	GoogleURLAPIKey    string `toml:"google_url_api_key"`
 	GoogleSearchAPIKey string `toml:"google_search_api_key"`
 	GoogleSearchCXID   string `toml:"google_search_cx_id"`
 }
