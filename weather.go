@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/Islandstone/yr"
+	"github.com/oystedal/wunderbar"
 )
 
 const (
@@ -12,8 +13,13 @@ const (
 	weatherNorURI = "http://www.yr.no/place/%s/%s/%s/%s/forecast.xml"
 )
 
-// Weather provides weather information from yr.no
 func Weather(query string, conf *Config) (output string, err error) {
+	w := wunderbar.NewWunderbar(conf.WundergroundAPIKey)
+	return w.GetLocalConditions(query)
+}
+
+// WeatherYR provides weather information from yr.no
+func WeatherYR(query string, conf *Config) (output string, err error) {
 	var data *yr.WeatherData
 	var URL, city, country, state string
 
