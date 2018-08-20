@@ -10,6 +10,7 @@ type Config struct {
 	GoogleURLAPIKey    string `toml:"google_url_api_key"`
 	GoogleSearchAPIKey string `toml:"google_search_api_key"`
 	GoogleSearchCXID   string `toml:"google_search_cx_id"`
+	GithubAPIKey       string `toml:"github_api_key"`
 	WundergroundAPIKey string `toml:"wunderground_api_key"`
 }
 
