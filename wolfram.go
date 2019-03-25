@@ -57,9 +57,6 @@ func Wolfram(query string, conf *Config) (output string, err error) {
 	}
 	_ = resp.Body.Close()
 
-	fmt.Printf("Body len: %d\n", len(body))
-	fmt.Printf("%s\n", body)
-
 	var xmlObj WolframData
 	err = xml.Unmarshal(body, &xmlObj)
 	if err != nil {
