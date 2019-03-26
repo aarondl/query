@@ -82,8 +82,6 @@ func Google(query string, conf *Config) (output string, err error) {
 	params.Set("num", "1")
 	u := fmt.Sprintf(googleURI, params.Encode())
 
-	fmt.Println(u)
-
 	var resp *http.Response
 	resp, err = http.Get(u)
 	if err != nil {
