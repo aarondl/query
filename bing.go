@@ -147,8 +147,6 @@ func Bing(query string, conf *Config) (output string, err error) {
 		return "", err
 	}
 
-	fmt.Printf("%s\n", b)
-
 	switch {
 	case len(results.WebPages.Value) > 0:
 		output := fmt.Sprintf("\x02Google? (\x02%d results\x02):\x02 %s - %s",
