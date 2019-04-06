@@ -130,7 +130,7 @@ func Bing(query string, conf *Config) (output string, err error) {
 
 	if resp.StatusCode != http.StatusOK {
 		if len(b) == 0 {
-			return fmt.Sprintf("\x02Google?: Query returned %d", resp.StatusCode), nil
+			return fmt.Sprintf("\x02Bing: Query returned %d", resp.StatusCode), nil
 		}
 
 		var errors BingError
@@ -139,7 +139,7 @@ func Bing(query string, conf *Config) (output string, err error) {
 		}
 
 		spew.Dump(errors)
-		return fmt.Sprintf("\x02Google?: Query error %s %s", errors.Errors[0].Message), nil
+		return fmt.Sprintf("\x02Bing: Query error %s %s", errors.Errors[0].Message), nil
 	}
 
 	var results BingAnswer
@@ -149,7 +149,7 @@ func Bing(query string, conf *Config) (output string, err error) {
 
 	switch {
 	case len(results.WebPages.Value) > 0:
-		output := fmt.Sprintf("\x02Google? (\x02%d results\x02):\x02 %s - %s",
+		output := fmt.Sprintf("\x02Bing (\x02%d results\x02):\x02 %s - %s",
 			results.WebPages.TotalEstimatedMatches,
 			results.WebPages.Value[0].URL,
 			results.WebPages.Value[0].Snippet)
@@ -157,13 +157,13 @@ func Bing(query string, conf *Config) (output string, err error) {
 	case len(results.Videos.Value) > 0:
 		duration := strings.ToLower(strings.TrimPrefix(results.Videos.Value[0].Duration, "PT"))
 
-		output := fmt.Sprintf("\x02Google? (\x02%s\x02):\x02 %s - %s - %s",
+		output := fmt.Sprintf("\x02Bing (\x02%s\x02):\x02 %s - %s - %s",
 			duration,
 			results.Videos.Value[0].ContentURL,
 			results.Videos.Value[0].Name,
 			results.Videos.Value[0].Description)
 		return output, nil
 	default:
-		return "\x02Google?: No results found.\x02", nil
+		return "\x02Bing: No results found.\x02", nil
 	}
 }
