@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"regexp"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 var (
@@ -22,7 +24,7 @@ var (
 func YouTube(msg string) (output string, err error) {
 	link := rgxURL.FindString(msg)
 	if len(link) == 0 {
-		return
+		return "", err
 	}
 
 	var resp *http.Response
@@ -30,13 +32,13 @@ func YouTube(msg string) (output string, err error) {
 
 	resp, err = http.Get(link)
 	if err != nil {
-		return
+		return "", err
 	}
 
 	defer resp.Body.Close()
 	body, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return
+		return "", err
 	}
 
 	var buf = bytes.NewBufferString("\x02YouTube")
@@ -49,11 +51,14 @@ func YouTube(msg string) (output string, err error) {
 		}
 	}
 
-	if title := rgxTitle.FindSubmatch(body); title != nil {
-		buf.WriteString(":\x02 ")
-		buf.WriteString(html.UnescapeString(string(title[1])))
-		output = buf.String()
+	title := rgxTitle.FindSubmatch(body)
+	if title == nil {
+		return "", errors.Errorf("failed to find title for: %s", link)
 	}
 
-	return
+	buf.WriteString(":\x02 ")
+	buf.WriteString(html.UnescapeString(string(title[1])))
+	output = buf.String()
+
+	return output, nil
 }
