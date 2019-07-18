@@ -36,7 +36,7 @@ func YouTube(msg string, cfg *Config) (output string, err error) {
 		return "", err
 	}
 
-	id := uri.Path
+	id := strings.TrimPrefix(uri.Path, "/")
 	if link[1] == "youtube.com" {
 		id = uri.Query().Get("v")
 	}
