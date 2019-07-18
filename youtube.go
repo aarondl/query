@@ -86,7 +86,7 @@ func YouTube(msg string, cfg *Config) (output string, err error) {
 	}
 
 	output = fmt.Sprintf(
-		`\x02YouTube (\x02%s\x02):\x02 %s`,
+		"\x02YouTube (\x02%s\x02):\x02 %s",
 		duration,
 		item.Snippet.Title,
 	)

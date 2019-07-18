@@ -21,7 +21,7 @@ func TestYouTube(t *testing.T) {
 	if len(output) == 0 {
 		t.Error("output was not set")
 	}
-	if output != `\x02YouTube (\x022m51s\x02):\x02 How To Catch Fish in the Sewer` {
+	if output != "\x02YouTube (\x022m51s\x02):\x02 How To Catch Fish in the Sewer" {
 		t.Error("output was wrong:", output)
 	}
 }
