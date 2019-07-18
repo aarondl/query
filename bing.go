@@ -139,7 +139,7 @@ func Bing(query string, conf *Config) (output string, err error) {
 		}
 
 		spew.Dump(errors)
-		return fmt.Sprintf("\x02Bing: Query error %s %s", errors.Errors[0].Message), nil
+		return fmt.Sprintf("\x02Bing: Query error %s", errors.Errors[0].Message), nil
 	}
 
 	var results BingAnswer

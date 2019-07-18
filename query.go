@@ -11,6 +11,7 @@ type Config struct {
 	GoogleURLAPIKey    string `toml:"google_url_api_key"`
 	GoogleSearchAPIKey string `toml:"google_search_api_key"`
 	GoogleSearchCXID   string `toml:"google_search_cx_id"`
+	GoogleYoutubeKey   string `toml:"google_youtube_key"`
 	WolframID          string `toml:"wolfram_id"`
 }
 
